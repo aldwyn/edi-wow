@@ -1,7 +1,6 @@
 import Tkinter
 import tkFileDialog
 from Tkinter import *
-import myhl
 import re
 import calculator
 
@@ -43,19 +42,23 @@ class UI(Tkinter.Tk):
 			init_end_index = self.lines.index('end vars')
 		if init_begin_index != -1 and init_end_index != -1 and init_begin_index < init_end_index:
 			self.init = [l.strip() for l in self.lines[init_begin_index + 1: init_end_index] if l.strip() != '']
+		if init_begin_index == -1 or init_end_index == -1:
+			self.log_error(self.lines[0].rstrip(';'), 'Missing `vars`.')
 		statements_begin_index = -1
 		statements_end_index = -1
 		if 'begin statements' in self.lines:
 			statements_begin_index = self.lines.index('begin statements')
 		if 'end statements' in self.lines:
 			statements_end_index = self.lines.index('end statements')
+		if statements_begin_index == -1 or statements_end_index == -1:
+			self.log_error(self.lines[0].rstrip(';'), 'Missing `statements`.')
 		if statements_begin_index != -1 and statements_end_index != -1 and statements_begin_index < statements_end_index:
 			self.statements = [l.strip() for l in self.lines[statements_begin_index + 1: statements_end_index] if l.strip() != '']
 		input_spaces = self.lines[:init_begin_index] + self.lines[init_end_index+1:statements_begin_index] + self.lines[statements_end_index+1:]
 		input_spaces = [e for e in input_spaces if e != '']
 		if input_spaces:
 			print input_spaces
-			self.log_error(input_spaces[0], 'Syntax error')
+			self.log_error(input_spaces[0].rstrip(';'), 'Syntax error')
 			return False
 		return True
 
@@ -103,7 +106,7 @@ class UI(Tkinter.Tk):
 				else:
 					key = s_split[1].strip()
 					curr_type = self.memory[key][1]
-					self.get_input()
+					self.get_input(key)
 
 					input_ = self.input_value.get()
 					print input_, type(input_)
@@ -229,6 +232,7 @@ class UI(Tkinter.Tk):
 
 
 	def log_error(self, s, message):
+		print 'S' ,s , message
 		print 'Error at line ' + self.lines_dict[s] + ': ' + message + '.'
 		error = 'Error at line ' + self.lines_dict[s] + ': ' + message + '\n'
 		self.console.insert(END, error)
@@ -329,10 +333,11 @@ class UI(Tkinter.Tk):
 		with open(filename, 'w') as f:
 			f.write(text)
 
-	def get_input(self):
+	def get_input(self, variable):
 		self.inputDialog = Toplevel()
 		frame = Frame(self.inputDialog, bg="#333")
-		Label(frame, text="ENTER VALUE: ", width=50,fg="white", bg="#333").pack(pady=10)
+		t = "ENTER VALUE FOR " + variable +": "
+		Label(frame, text=t, width=50,fg="white", bg="#333").pack(pady=10)
 		self.e = Entry(frame, textvariable=self.input_value)
 		self.e.delete(0, END)
 		self.e.insert(0, "")
